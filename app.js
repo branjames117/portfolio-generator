@@ -1,7 +1,8 @@
 const inquirer = require('inquirer');
-const fs = require('fs');
 const generatePage = require('./src/page-template');
+const { writeFile, copyFile } = require('./utils/generate-site.js');
 
+// using inquirer package, get basic user data
 const promptUser = () => {
   return inquirer.prompt([
     {
@@ -52,6 +53,7 @@ const promptUser = () => {
   ]);
 };
 
+// for each project, gather data on that project
 const promptProject = (portfolioData) => {
   // If there are no projects array property, create one
   if (!portfolioData.projects) {
@@ -132,63 +134,28 @@ Add a New Project
     });
 };
 
-// use mock data to streamline development
-const mockData = {
-  name: 'Brandon',
-  github: 'branjames117',
-  confirmAbout: true,
-  about:
-    'Duis consectetur nunc nunc. Morbi finibus non sapien nec pharetra. Fusce nec dignissim orci, ac interdum ipsum. Morbi mattis justo sed commodo pellentesque. Nulla eget fringilla nulla. Integer gravida magna mi, id efficitur metus tempus et.',
-  projects: [
-    {
-      name: 'Run Buddy',
-      description:
-        'Duis consectetur nunc nunc. Morbi finibus non sapien nec pharetra. Fusce nec dignissim orci, ac interdum ipsum. Morbi mattis justo sed commodo pellentesque. Nulla eget fringilla nulla. Integer gravida magna mi, id efficitur metus tempus et. Nam fringilla elit dapibus pellentesque cursus.',
-      languages: ['HTML', 'CSS'],
-      link: 'https://github.com/branjames117/run-buddy',
-      feature: true,
-      confirmAddProject: true,
-    },
-    {
-      name: 'Taskinator',
-      description:
-        'Duis consectetur nunc nunc. Morbi finibus non sapien nec pharetra. Fusce nec dignissim orci, ac interdum ipsum. Morbi mattis justo sed commodo pellentesque. Nulla eget fringilla nulla. Integer gravida magna mi, id efficitur metus tempus et. Nam fringilla elit dapibus pellentesque cursus.',
-      languages: ['JavaScript', 'HTML', 'CSS'],
-      link: 'https://github.com/branjames117/taskinator',
-      feature: true,
-      confirmAddProject: true,
-    },
-    {
-      name: 'Taskmaster Pro',
-      description:
-        'Duis consectetur nunc nunc. Morbi finibus non sapien nec pharetra. Fusce nec dignissim orci, ac interdum ipsum. Morbi mattis justo sed commodo pellentesque. Nulla eget fringilla nulla. Integer gravida magna mi, id efficitur metus tempus et. Nam fringilla elit dapibus pellentesque cursus.',
-      languages: ['JavaScript', 'jQuery', 'CSS', 'HTML', 'Bootstrap'],
-      link: 'https://github.com/branjames117/taskmaster-pro',
-      feature: false,
-      confirmAddProject: true,
-    },
-    {
-      name: 'Robot Gladiators',
-      description:
-        'Duis consectetur nunc nunc. Morbi finibus non sapien nec pharetra. Fusce nec dignissim orci, ac interdum ipsum. Morbi mattis justo sed commodo pellentesque.',
-      languages: ['JavaScript'],
-      link: 'https://github.com/branjames117/robot-gladiators',
-      feature: false,
-      confirmAddProject: false,
-    },
-  ],
-};
-const pageHTML = generatePage(mockData);
-fs.writeFile('./index.html', pageHTML, (err) => {
-  if (err) throw new Error(err);
-});
-
-// promptUser() // returns a promise
-//   .then(promptProject) // after the promise is resolved, send that object to the next function
-//   .then((portfolioData) => {
-//     const pageHTML = generatePage(portfolioData);
-
-//     fs.writeFile('./index.html', pageHTML, (err) => {
-//       if (err) throw new Error(err);
-//     });
-//   }); // after THAT promise is resolved, log
+// promise chain
+// first, get basic user data with promptUser()
+promptUser()
+  // then get projects from promptProject() until user decides to stop
+  .then(promptProject)
+  // then send that data to the generatePage() function
+  .then((portfolioData) => {
+    return generatePage(portfolioData);
+  })
+  // then send the generated HTML to the writeFile() function
+  .then((pageHTML) => {
+    return writeFile(pageHTML);
+  })
+  // then copy the stylesheet from /dist
+  .then((writeFileResponse) => {
+    console.log(writeFileResponse);
+    return copyFile();
+  })
+  // then call it a day
+  .then((copyFileResponse) => {
+    console.log(copyFileResponse);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
